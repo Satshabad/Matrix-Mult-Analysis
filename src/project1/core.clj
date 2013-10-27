@@ -1,6 +1,7 @@
 (ns project1.core
   (require [clojure.data.csv :as csv]
-           [clojure.java.io :as io]))
+           [clojure.java.io :as io])
+  (use [criterium.core :only [bench quick-bench benchmark quick-benchmark with-progress-reporting]] ))
 
 (defn sum [l]
   (reduce + l))
@@ -8,7 +9,7 @@
 (defn transpose [s]
   (apply mapv vector s))
 
-(defn mult-iter [m1 m2]
+(defn mult-classic [m1 m2]
   (let [m2 (transpose m2) n (count m1)]
     (mapv
       (fn
@@ -44,20 +45,18 @@
 
 (defn mult-divide-and-conquer [A B]
   (if (= 2 (count A))
-    (mult-iter A B)
+    (mult-classic A B)
     (let [[A11 A12 A21 A22] (quarters A)
           [B11 B12 B21 B22] (quarters B)
 
           C11 (add (mult-divide-and-conquer A11 B11) (mult-divide-and-conquer A12 B21))
           C12 (add (mult-divide-and-conquer A11 B12) (mult-divide-and-conquer A12 B22))
           C21 (add (mult-divide-and-conquer A21 B11) (mult-divide-and-conquer A22 B21))
-          C22 (add (mult-divide-and-conquer A21 B12) (mult-divide-and-conquer A22 B22)) ]
+          C22 (add (mult-divide-and-conquer A21 B12) (mult-divide-and-conquer A22 B22))]
       (combine C11 C12 C21 C22))))
 
-
 ;--------------------  Strassen -------------------
-;
-;
+
 (defn sub [m1 m2]
   (mapv #(mapv - %1 %2) m1 m2))
 
@@ -66,7 +65,7 @@
 
 (defn mult-strassen [A B]
   (if (= (count A) 2)
-    (mult-iter A B)
+    (mult-classic A B)
     (let [[A11 A12 A21 A22] (quarters A)
           [B11 B12 B21 B22] (quarters B)
 
@@ -93,25 +92,44 @@
                     (partial rand-int 100000)))))]
     (vec (take n (repeatedly (partial random-row n))))))
 
-(defn time-of-mult [n]
-  (read-string ((clojure.string/split
-                 (with-out-str
-                   (time
-                     (mult-iter (matrix-of-size n) (matrix-of-size n))))
-                  #" ")
-               2)))
-
 (defn exp [x n]
   (loop [acc 1 n n]
     (if (zero? n) acc
         (recur (* x acc) (dec n)))))
 
 (defn n-powers-of-2 [n]
-  (take n (for [x (range)] (exp 2N x))))
+  (map exp (repeat n 2) (range 1 (inc n))))
 
-; (with-open [out-file (io/writer "run-time-data/threeloops.csv")]
-;   (csv/write-csv out-file
-;    (transpose (for [x (n-powers-of-2 9)]
-;      [x (time-of-mult x)]))))
-;
-;
+; taken from http://clojuredocs.org/clojure_core/clojure.core/time and modified
+(defmacro time-of
+  "Evaluates expr and prints the time it took.  Returns the value of
+ expr."
+  {:added "1.0"}
+  [expr]
+  `(let [start# (. System (nanoTime))
+         ret# ~expr]
+     (/ (double (- (. System (nanoTime)) start#)) 1000000.0)))
+
+(defn avg-time-of-mult [mult-fn size num-of-runs]
+  ; do 3 warm up runs to get JIT benifts
+  (let [total-time (do (mult-fn (matrix-of-size size) (matrix-of-size size))
+                       (mult-fn (matrix-of-size size) (matrix-of-size size))
+                       (mult-fn (matrix-of-size size) (matrix-of-size size))
+                       (time-of
+                         (dotimes [n num-of-runs]
+                                  (do
+                                    (println (str "Running " mult-fn " of size " size " run: " n))
+                                    (mult-fn (matrix-of-size size) (matrix-of-size size))))))]
+    (/ total-time num-of-runs)))
+
+
+(defn run-and-record [up-to-size num-of-runs out-file-name f]
+  (with-open [out-file (io/writer out-file-name)]
+    (csv/write-csv out-file
+     (transpose
+       (for [x (n-powers-of-2 up-to-size)]
+         [x (avg-time-of-mult f x num-of-runs)])))))
+
+(defn -main []
+  )
+
