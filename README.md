@@ -1,14 +1,9 @@
-# project1
+# Matrix Multiplication Analysis for Advanced Algorithms class
 
-A Clojure library designed to ... well, that part is up to you.
-
-## Usage
-
-FIXME
 
 ## License
 
-Copyright © 2013 FIXME
+Copyright © 2013 Satshabad
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
