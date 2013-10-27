@@ -1,7 +1,7 @@
 (ns project1.core
   (require [clojure.data.csv :as csv]
            [clojure.java.io :as io])
-  (use [criterium.core :only [bench quick-bench benchmark quick-benchmark with-progress-reporting]] ))
+  (use [criterium.core :only [quick-benchmark]] ))
 
 (defn sum [l]
   (reduce + l))
@@ -100,36 +100,19 @@
 (defn n-powers-of-2 [n]
   (map exp (repeat n 2) (range 1 (inc n))))
 
-; taken from http://clojuredocs.org/clojure_core/clojure.core/time and modified
-(defmacro time-of
-  "Evaluates expr and prints the time it took.  Returns the value of
- expr."
-  {:added "1.0"}
-  [expr]
-  `(let [start# (. System (nanoTime))
-         ret# ~expr]
-     (/ (double (- (. System (nanoTime)) start#)) 1000000.0)))
+(defn avg-time-of-mult [mult-fn size]
+  (do (println (str "Ruuning " mult-fn " of size " size))
+  (first (:mean (quick-benchmark (mult-fn (matrix-of-size size) (matrix-of-size size)) {})))))
 
-(defn avg-time-of-mult [mult-fn size num-of-runs]
-  ; do 3 warm up runs to get JIT benifts
-  (let [total-time (do (mult-fn (matrix-of-size size) (matrix-of-size size))
-                       (mult-fn (matrix-of-size size) (matrix-of-size size))
-                       (mult-fn (matrix-of-size size) (matrix-of-size size))
-                       (time-of
-                         (dotimes [n num-of-runs]
-                                  (do
-                                    (println (str "Running " mult-fn " of size " size " run: " n))
-                                    (mult-fn (matrix-of-size size) (matrix-of-size size))))))]
-    (/ total-time num-of-runs)))
-
-
-(defn run-and-record [up-to-size num-of-runs out-file-name f]
+(defn run-and-record [up-to-size out-file-name f]
   (with-open [out-file (io/writer out-file-name)]
     (csv/write-csv out-file
      (transpose
        (for [x (n-powers-of-2 up-to-size)]
-         [x (avg-time-of-mult f x num-of-runs)])))))
+         [x (avg-time-of-mult f x)])))))
 
 (defn -main []
-  )
-
+  (do
+    (run-and-record 9 "run-time-data/classic.csv" mult-classic)
+    (run-and-record 9 "run-time-data/divide.csv" mult-divide-and-conquer)
+    (run-and-record 9 "run-time-data/strassen.csv" mult-strassen)))
