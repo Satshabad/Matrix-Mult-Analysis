@@ -131,5 +131,8 @@
          [x (avg-time-of-mult f x num-of-runs)])))))
 
 (defn -main []
-  )
+  (do
+    (run-and-record 9 30 "run-time-data/classic.csv" mult-classic)
+    (run-and-record 9 30 "run-time-data/divide.csv" mult-divide-and-conquer)
+    (run-and-record 9 30 "run-time-data/strassen.csv" mult-strassen)))
 
