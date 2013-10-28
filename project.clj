@@ -7,5 +7,5 @@
                  [org.clojure/data.csv "0.1.2"]
                  [criterium "0.4.2"]]
 
-  ; :jvm-opts ["-Xmx1g"]
+  ; :jvm-opts ["-Xmx1g" "-Xss94g"]
   )
