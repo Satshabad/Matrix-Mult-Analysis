@@ -3,6 +3,8 @@
            [clojure.java.io :as io])
   (use [criterium.core :only [bench quick-bench benchmark quick-benchmark with-progress-reporting]] ))
 
+;--------------------  Classic -------------------
+
 (defn sum [l]
   (reduce + l))
 
@@ -46,8 +48,16 @@
 (defn mult-divide-and-conquer [A B]
   (if (= 2 (count A))
     (mult-classic A B)
-    (let [[A11 A12 A21 A22] (quarters A)
-          [B11 B12 B21 B22] (quarters B)
+    (let [quartersA (quarters A)
+          quartersB (quarters B)
+          A11 (quartersA 0)
+          A12 (quartersA 1)
+          A21 (quartersA 2)
+          A22 (quartersA 3)
+          B11 (quartersB 0)
+          B12 (quartersB 1)
+          B21 (quartersB 2)
+          B22 (quartersB 3)
 
           C11 (add (mult-divide-and-conquer A11 B11) (mult-divide-and-conquer A12 B21))
           C12 (add (mult-divide-and-conquer A11 B12) (mult-divide-and-conquer A12 B22))
@@ -66,8 +76,16 @@
 (defn mult-strassen [A B]
   (if (= (count A) 2)
     (mult-classic A B)
-    (let [[A11 A12 A21 A22] (quarters A)
-          [B11 B12 B21 B22] (quarters B)
+    (let [quartersA (quarters A)
+          quartersB (quarters B)
+          A11 (quartersA 0)
+          A12 (quartersA 1)
+          A21 (quartersA 2)
+          A22 (quartersA 3)
+          B11 (quartersB 0)
+          B12 (quartersB 1)
+          B21 (quartersB 2)
+          B22 (quartersB 3)
 
           P (mult-divide-and-conquer (add A11 A22) (add B11 B22))
           Q (mult-divide-and-conquer (add A21 A22) B11)

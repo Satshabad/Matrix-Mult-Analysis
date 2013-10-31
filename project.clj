@@ -8,4 +8,5 @@
                  [criterium "0.4.2"]]
 
   ; :jvm-opts ["-Xmx1g" "-Xss94g"]
+  :global-vars {*warn-on-reflection* true}
   )
