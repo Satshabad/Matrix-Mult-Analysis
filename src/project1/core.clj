@@ -42,7 +42,7 @@
 
 (defn combine [M11 M12 M21 M22]
   (let [top (mapv concatv M11 M12)
-        bottom (map concatv M21 M22)]
+        bottom (mapv concatv M21 M22)]
     (concatv top bottom)))
 
 (defn mult-divide-and-conquer [A B]
